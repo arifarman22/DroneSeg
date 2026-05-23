@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+.next/
+__pycache__/
+*.pyc
+
+# Virtual environment
+venv/
+
+# Uploads and results (runtime data)
+backend/uploads/
+backend/results/
+
+# Logs
+*.log
+
+# Environment files
+.env
+.env.local
