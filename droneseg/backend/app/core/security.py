@@ -1,9 +1,15 @@
 from fastapi import UploadFile, HTTPException
 from pathlib import PurePosixPath
-from app.core.config import get_settings
 
-ALLOWED_EXTENSIONS = {".png", ".jpg", ".jpeg"}
-ALLOWED_CONTENT_TYPES = {"image/png", "image/jpeg"}
+ALLOWED_EXTENSIONS = {".png", ".jpg", ".jpeg", ".mpo"}
+ALLOWED_CONTENT_TYPES = {
+    "image/png",
+    "image/jpeg",
+    "image/jpg",
+    "image/x-mpo",
+    "image/mpo",
+    "application/octet-stream",
+}
 MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024  # 50MB
 
 

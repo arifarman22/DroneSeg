@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { DetectionItem } from '@/types'
@@ -32,6 +32,7 @@ export default function MapViewer({
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
+  const [isVisible, setIsVisible] = useState(false)
 
   const bounds = imageBounds || DEFAULT_BOUNDS
   const mapBounds: [[number, number], [number, number], [number, number], [number, number]] = [
@@ -41,8 +42,20 @@ export default function MapViewer({
     [bounds[0], bounds[1]],
   ]
 
+  // Observe visibility
   useEffect(() => {
-    if (!containerRef.current || mapRef.current) return
+    if (!containerRef.current) return
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setIsVisible(true) },
+      { threshold: 0.05 }
+    )
+    observer.observe(containerRef.current)
+    return () => observer.disconnect()
+  }, [])
+
+  // Init map only when visible
+  useEffect(() => {
+    if (!isVisible || !containerRef.current || mapRef.current) return
 
     const map = new maplibregl.Map({
       container: containerRef.current,
@@ -69,8 +82,12 @@ export default function MapViewer({
     map.addControl(new maplibregl.ScaleControl({}), 'bottom-left')
 
     mapRef.current = map
-    return () => { map.remove(); mapRef.current = null }
-  }, [])
+
+    const resizeObserver = new ResizeObserver(() => map.resize())
+    resizeObserver.observe(containerRef.current)
+
+    return () => { resizeObserver.disconnect(); map.remove(); mapRef.current = null }
+  }, [isVisible])
 
   // Drone image overlay
   useEffect(() => {
@@ -87,7 +104,7 @@ export default function MapViewer({
     }
     if (map.isStyleLoaded()) add()
     else map.on('load', add)
-  }, [imageUrl])
+  }, [imageUrl, isVisible])
 
   useEffect(() => {
     const map = mapRef.current
@@ -114,7 +131,7 @@ export default function MapViewer({
     }
     if (map.isStyleLoaded()) update()
     else map.on('load', update)
-  }, [maskUrl])
+  }, [maskUrl, isVisible])
 
   useEffect(() => {
     const map = mapRef.current

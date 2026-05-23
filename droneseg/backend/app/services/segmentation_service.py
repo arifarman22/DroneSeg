@@ -55,13 +55,14 @@ class SegmentationService:
         """Load model at startup. Call once during app lifespan."""
         settings = get_settings()
         model_name = settings.model_name
+        token = settings.hf_token or None
         try:
             logger.info(f"Loading segmentation model: {model_name}")
             self._device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
             logger.info(f"Using device: {self._device}")
 
-            self._processor = SegformerImageProcessor.from_pretrained(model_name)
-            self._model = SegformerForSemanticSegmentation.from_pretrained(model_name)
+            self._processor = SegformerImageProcessor.from_pretrained(model_name, token=token)
+            self._model = SegformerForSemanticSegmentation.from_pretrained(model_name, token=token)
             self._model.to(self._device)
             self._model.eval()
 
@@ -113,16 +114,20 @@ class SegmentationService:
         with torch.no_grad():
             outputs = self._model(**inputs)
 
-        # Upsample logits to original resolution
+        # Upsample logits to inference resolution (not original) to save memory
         logits = outputs.logits  # (1, num_classes, H/4, W/4)
         upsampled = torch.nn.functional.interpolate(
-            logits, size=(orig_h, orig_w), mode="bilinear", align_corners=False
+            logits, size=(inf_h, inf_w), mode="bilinear", align_corners=False
         )
 
         # Confidence map (softmax) and prediction
         probs = torch.softmax(upsampled, dim=1)
         confidence_map = probs.max(dim=1).values.squeeze().cpu().numpy()
-        pred = upsampled.argmax(dim=1).squeeze().cpu().numpy().astype(np.uint8)
+        pred_small = upsampled.argmax(dim=1).squeeze().cpu().numpy().astype(np.uint8)
+
+        # Resize prediction to original resolution with nearest neighbor
+        pred = cv2.resize(pred_small, (orig_w, orig_h), interpolation=cv2.INTER_NEAREST)
+        confidence_map = cv2.resize(confidence_map, (orig_w, orig_h), interpolation=cv2.INTER_LINEAR)
 
         # Build colorized mask
         color_mask = np.zeros((orig_h, orig_w, 3), dtype=np.uint8)

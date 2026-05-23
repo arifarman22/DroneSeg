@@ -15,7 +15,7 @@ export default function UploadDropzone({ onUpload, loading }: Props) {
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: { 'image/jpeg': ['.jpg', '.jpeg'], 'image/png': ['.png'] },
+    accept: { 'image/jpeg': ['.jpg', '.jpeg', '.mpo'], 'image/png': ['.png'] },
     maxFiles: 1,
     disabled: loading,
   })
@@ -42,7 +42,7 @@ export default function UploadDropzone({ onUpload, loading }: Props) {
           <p className="text-sm text-gray-700 font-medium">
             {isDragActive ? 'Drop image here' : 'Drop drone image or click to browse'}
           </p>
-          <p className="text-xs text-gray-400 mt-1">JPEG or PNG, up to 50 MB</p>
+          <p className="text-xs text-gray-400 mt-1">JPEG, PNG, or MPO, up to 50 MB</p>
         </div>
       </div>
     </div>

@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     upload_dir: str = "./uploads"
     results_dir: str = "./results"
     model_name: str = "nvidia/segformer-b0-finetuned-ade-512-512"
+    hf_token: str = ""
     max_file_size_mb: int = 50
     max_inference_size: int = 1024
     log_level: str = "INFO"
